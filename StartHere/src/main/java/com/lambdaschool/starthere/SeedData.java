@@ -1,11 +1,7 @@
 package com.lambdaschool.starthere;
 
-import com.lambdaschool.starthere.models.Question;
-import com.lambdaschool.starthere.models.Role;
-import com.lambdaschool.starthere.models.User;
-import com.lambdaschool.starthere.models.UserRoles;
-import com.lambdaschool.starthere.services.RoleService;
-import com.lambdaschool.starthere.services.UserService;
+import com.lambdaschool.starthere.models.*;
+import com.lambdaschool.starthere.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -13,62 +9,58 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 
-@Transactional
-@Component
-public class SeedData implements CommandLineRunner
-{
-    @Autowired
-    RoleService roleService;
 
-    @Autowired
-    UserService userService;
+//@Transactional
+//@Component
+public class SeedData implements CommandLineRunner {
 
+    UserRepository userrepos;
+    RoleRepository rolerepos;
+    TypeRepository typerepos;
+    QuestionRepository questionrepos;
+    CommentRepository commentrepos;
+
+
+    public SeedData(UserRepository userrepos, RoleRepository rolerepos, TypeRepository typerepos, QuestionRepository questionrepos, CommentRepository commentrepos) {
+        this.userrepos = userrepos;
+        this.rolerepos = rolerepos;
+        this.typerepos = typerepos;
+        this.questionrepos = questionrepos;
+        this.commentrepos = commentrepos;
+    }
 
     @Override
-    public void run(String[] args) throws Exception
-    {
+    public void run(String[] args) throws Exception {
+
         Role r1 = new Role("admin");
         Role r2 = new Role("user");
         Role r3 = new Role("data");
 
-        roleService.save(r1);
-        roleService.save(r2);
-        roleService.save(r3);
+        rolerepos.save(r1);
+        rolerepos.save(r2);
+        rolerepos.save(r3);
 
-        // admin, data, user
-        ArrayList<UserRoles> admins = new ArrayList<>();
-        admins.add(new UserRoles(new User(), r1));
-        admins.add(new UserRoles(new User(), r2));
-        admins.add(new UserRoles(new User(), r3));
-        User u1 = new User("admin", "password", admins);
-        u1.getQuestions().add(new Question("A creative man is motivated by the desire to achieve, not by the desire to beat others", u1));
-        u1.getQuestions().add(new Question("The question isn't who is going to let me; it's who is going to stop me.", u1));
-        userService.save(u1);
+        Type t1 = new Type("mentor");
+        Type t2 = new Type("entrepreneur");
 
-        // data, user
-        ArrayList<UserRoles> datas = new ArrayList<>();
-        datas.add(new UserRoles(new User(), r3));
-        datas.add(new UserRoles(new User(), r2));
-        User u2 = new User("cinnamon", "1234567", datas);
-        userService.save(u2);
+        typerepos.save(t1);
+        typerepos.save(t2);
 
-        // user
-        ArrayList<UserRoles> users = new ArrayList<>();
-        users.add(new UserRoles(new User(), r2));
-        User u3 = new User("barnbarn", "ILuvM4th!", users);
-        u3.getQuestions().add(new Question("Live long and prosper", u3));
-        u3.getQuestions().add(new Question("The enemy of my enemy is the enemy I kill last", u3));
-        u3.getQuestions().add(new Question("Beam me up", u3));
-        userService.save(u3);
+        ArrayList<UserRoles> adminUserRoles = new ArrayList<>();
+        adminUserRoles.add(new UserRoles(new User(), r1));
+        adminUserRoles.add(new UserRoles(new User(), r2));
+        adminUserRoles.add(new UserRoles(new User(), r3));
+        ArrayList<UserTypes> adminUserTypes = new ArrayList<>();
+        adminUserTypes.add(new UserTypes(new User(), t1));
+        adminUserTypes.add(new UserTypes(new User(), t2));
+        User u1 = new User("admin", "password", "phoneNumber", "industrytype", adminUserTypes, adminUserRoles);
+//        u1.getQuestions().add(new Question("What criteria are required to apply to Y Combinator?", u1));
+//        u1.getQuestions().add(new Question("When should we develop inhouse versus outsourcing?", u1));
+        userrepos.save(u1);
 
-        users = new ArrayList<>();
-        users.add(new UserRoles(new User(), r2));
-        User u4 = new User("Bob", "password", users);
-        userService.save(u4);
-
-        users = new ArrayList<>();
-        users.add(new UserRoles(new User(), r2));
-        User u5 = new User("Jane", "password", users);
-        userService.save(u5);
+//                ArrayList<Question> quests = new ArrayList<>()
+        Question q1 = new Question("help", u1);
+        questionrepos.save(q1);
+        commentrepos.save(new Comment("this is my comment", q1));
     }
 }

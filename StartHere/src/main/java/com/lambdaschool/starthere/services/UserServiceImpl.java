@@ -1,8 +1,7 @@
 package com.lambdaschool.starthere.services;
 
-import com.lambdaschool.starthere.models.Question;
-import com.lambdaschool.starthere.models.User;
-import com.lambdaschool.starthere.models.UserRoles;
+import com.lambdaschool.starthere.exceptions.ResourceNotFoundException;
+import com.lambdaschool.starthere.models.*;
 import com.lambdaschool.starthere.repository.RoleRepository;
 import com.lambdaschool.starthere.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +13,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,9 +38,20 @@ public class UserServiceImpl implements UserDetailsService, UserService
         return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), user.getAuthority());
     }
 
-    public User findUserById(long id) throws EntityNotFoundException
+    public User findUserByName(String name)
     {
-        return userrepos.findById(id).orElseThrow(() -> new EntityNotFoundException(Long.toString(id)));
+        User uname = userrepos.findByUsername(name);
+
+        if (uname == null)
+        {
+            throw new UsernameNotFoundException("User not found");
+        }
+        return uname;
+    }
+
+    public User findUserById(long id) throws ResourceNotFoundException
+    {
+        return userrepos.findById(id).orElseThrow(() -> new ResourceNotFoundException(Long.toString(id)));
     }
 
     public List<User> findAll()
@@ -60,7 +69,7 @@ public class UserServiceImpl implements UserDetailsService, UserService
             userrepos.deleteById(id);
         } else
         {
-            throw new EntityNotFoundException(Long.toString(id));
+            throw new ResourceNotFoundException(Long.toString(id));
         }
     }
 
@@ -71,6 +80,15 @@ public class UserServiceImpl implements UserDetailsService, UserService
         User newUser = new User();
         newUser.setUsername(user.getUsername());
         newUser.setPasswordNoEncrypt(user.getPassword());
+        newUser.setPhonenumber(user.getPhonenumber());
+        newUser.setIndustrytype(user.getIndustrytype());
+
+        ArrayList<UserTypes> newUserTypes = new ArrayList<>();
+        for (UserTypes ut : user.getUserTypes())
+        {
+            newUserTypes.add(new UserTypes(newUser, ut.getType()));
+        }
+        newUser.setUserTypes(newUserTypes);
 
         ArrayList<UserRoles> newRoles = new ArrayList<>();
         for (UserRoles ur : user.getUserRoles())
@@ -81,8 +99,10 @@ public class UserServiceImpl implements UserDetailsService, UserService
 
         for (Question q : user.getQuestions())
         {
-            newUser.getQuestions().add(new Question(q.getQuote(), newUser));
+            newUser.getQuestions().add(new Question(q.getQuestion(), q.getComments(), newUser));
         }
+
+
 
         return userrepos.save(newUser);
     }
@@ -127,18 +147,18 @@ public class UserServiceImpl implements UserDetailsService, UserService
                 {
                     for (Question q : user.getQuestions())
                     {
-                        currentUser.getQuestions().add(new Question(q.getQuote(), currentUser));
+                        currentUser.getQuestions().add(new Question(q.getQuestion(), currentUser));
                     }
                 }
 
                 return userrepos.save(currentUser);
             } else
             {
-                throw new EntityNotFoundException(Long.toString(id) + " Not current user");
+                throw new ResourceNotFoundException(Long.toString(id) + " Not current user");
             }
         } else
         {
-            throw new EntityNotFoundException(authentication.getName());
+            throw new ResourceNotFoundException(authentication.getName());
         }
 
     }

@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiModelProperty;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import javax.annotation.processing.Generated;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +20,13 @@ import java.util.List;
 public class User extends Auditable
 {
 
+
     @ApiModelProperty(name = "userid", value = "Primary key for user", required =true, example ="1")
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long userid;
 
-    @ApiModelProperty(name = "username", value = "User Name", required = true, example = "Papa Smurf")
+    @ApiModelProperty(name = "username", value = "User Name", required = true, example = "John Doe")
     @Column(nullable = false,
             unique = true)
     private String username;
@@ -33,6 +35,20 @@ public class User extends Auditable
     @Column(nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+
+    @ApiModelProperty (name = "phoneNumber", value = "Phone Number", required = true, example = "555-555-5555")
+    @Column(nullable = false,
+            unique = false)
+    private String phonenumber;
+
+    @ApiModelProperty(name = "industrytype", value = "Industry Type", required = true, example = "Finance")
+    @Column(nullable = false)
+    private String industrytype;
+
+    @OneToMany(mappedBy = "user",
+            cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("user")
+    private List<UserTypes> userTypes = new ArrayList<>();
 
     @OneToMany(mappedBy = "user",
                cascade = CascadeType.ALL)
@@ -49,10 +65,17 @@ public class User extends Auditable
     {
     }
 
-    public User(String username, String password, List<UserRoles> userRoles)
+    public User(String username, String password, String phonenumber, String industrytype, List<UserTypes> userTypes, List<UserRoles> userRoles)
     {
         setUsername(username);
         setPassword(password);
+        setPhonenumber(phonenumber);
+        setIndustrytype(industrytype);
+        this.userTypes = userTypes;
+        for (UserTypes ut : userTypes)
+        {
+            ut.setUser(this);
+        }
         for (UserRoles ur : userRoles)
         {
             ur.setUser(this);
@@ -68,6 +91,15 @@ public class User extends Auditable
     public void setUserid(long userid)
     {
         this.userid = userid;
+    }
+
+
+    public String getPhonenumber() {
+        return phonenumber;
+    }
+
+    public void setPhonenumber(String phonenumber) {
+        this.phonenumber = phonenumber;
     }
 
     public String getUsername()
@@ -94,6 +126,24 @@ public class User extends Auditable
     public void setPasswordNoEncrypt(String password)
     {
         this.password = password;
+    }
+
+    public String getIndustrytype() {
+        return industrytype;
+    }
+
+    public void setIndustrytype(String industrytype) {
+        this.industrytype = industrytype;
+    }
+
+    public List<UserTypes> getUserTypes()
+    {
+        return userTypes;
+    }
+
+    public void setUserTypes(List<UserTypes> userTypes)
+    {
+        this.userTypes = userTypes;
     }
 
     public List<UserRoles> getUserRoles()
@@ -128,4 +178,5 @@ public class User extends Auditable
 
         return rtnList;
     }
+
 }

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -18,7 +19,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/quotes")
+@RequestMapping("/questions")
 public class QuestionsController
 {
     private static final Logger logger = LoggerFactory.getLogger(RolesController.class);
@@ -26,8 +27,8 @@ public class QuestionsController
     @Autowired
     QuestionService questionService;
 
-    @GetMapping(value = "/quotes", produces = {"application/json"})
-    public ResponseEntity<?> listAllQuotes(HttpServletRequest request)
+    @GetMapping(value = "/questions", produces = {"application/json"})
+    public ResponseEntity<?> listAllQuestions(HttpServletRequest request)
     {
         logger.trace(request.getRequestURI() + " accessed");
 
@@ -36,19 +37,20 @@ public class QuestionsController
     }
 
 
-    @GetMapping(value = "/quote/{quoteId}", produces = {"application/json"})
-    public ResponseEntity<?> getQuote(HttpServletRequest request, @PathVariable
-                                              Long quoteId)
+    @GetMapping(value = "/question/{questionsId}", produces = {"application/json"})
+    public ResponseEntity<?> getQuestion(HttpServletRequest request, @PathVariable
+                                              Long questionId)
     {
         logger.trace(request.getRequestURI() + " accessed");
 
-        Question q = questionService.findQuoteById(quoteId);
+        Question q;
+        q = questionService.findQuestionById(questionId);
         return new ResponseEntity<>(q, HttpStatus.OK);
     }
 
 
     @GetMapping(value = "/username/{userName}", produces = {"application/json"})
-    public ResponseEntity<?> findQuoteByUserName(HttpServletRequest request, @PathVariable
+    public ResponseEntity<?> findQuestionByUserName(HttpServletRequest request, @PathVariable
                                                          String userName)
     {
         logger.trace(request.getRequestURI() + " accessed");
@@ -59,29 +61,29 @@ public class QuestionsController
 
 
 
-    @PostMapping(value = "/quote")
-    public ResponseEntity<?> addNewQuote(HttpServletRequest request, @Valid @RequestBody
-            Question newQuestion) throws URISyntaxException
+    @PostMapping(value = "/question")
+    public ResponseEntity<?> addNewQuestion(HttpServletRequest request, @Valid @RequestBody
+            Question newQuestion, Authentication authentication) throws URISyntaxException
     {
         logger.trace(request.getRequestURI() + " accessed");
 
-        newQuestion = questionService.save(newQuestion);
+        newQuestion = questionService.save(newQuestion, authentication);
 
         // set the location header for the newly created resource
         HttpHeaders responseHeaders = new HttpHeaders();
-        URI newQuoteURI = ServletUriComponentsBuilder
+        URI newQuestionURI = ServletUriComponentsBuilder
                 .fromCurrentRequest()
-                .path("/{quoteid}")
-                .buildAndExpand(newQuestion.getQuotesid())
+                .path("/{questionid}")
+                .buildAndExpand(newQuestion.getQuestionsid())
                 .toUri();
-        responseHeaders.setLocation(newQuoteURI);
+        responseHeaders.setLocation(newQuestionURI);
 
         return new ResponseEntity<>(null, responseHeaders, HttpStatus.CREATED);
     }
 
 
-    @DeleteMapping("/quote/{id}")
-    public ResponseEntity<?> deleteQuoteById(HttpServletRequest request, @PathVariable
+    @DeleteMapping("/question/{id}")
+    public ResponseEntity<?> deleteQuestionById(HttpServletRequest request, @PathVariable
                                                      long id)
     {
         logger.trace(request.getRequestURI() + " accessed");

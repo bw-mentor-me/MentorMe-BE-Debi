@@ -1,71 +1,88 @@
 package com.lambdaschool.starthere.services;
 
+import com.lambdaschool.starthere.exceptions.ResourceNotFoundException;
 import com.lambdaschool.starthere.models.Question;
+import com.lambdaschool.starthere.models.SmsRequest;
 import com.lambdaschool.starthere.repository.QuestionRepository;
+import com.lambdaschool.starthere.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service(value = "quoteService")
+@Service(value = "questionService")
 public class QuestionServiceImpl implements QuestionService
 {
     @Autowired
-    private QuestionRepository quoterepos;
+    private SmsSender smsSender;
+
+    @Value("${twilio.trial-number.path}")
+    private String trialNumber;
+
+
+    @Autowired
+    private UserRepository userrepos;
+
+
+    @Autowired
+    private QuestionRepository questionrepos;
 
     @Override
     public List<Question> findAll()
     {
         List<Question> list = new ArrayList<>();
-        quoterepos.findAll().iterator().forEachRemaining(list::add);
+        questionrepos.findAll().iterator().forEachRemaining(list::add);
         return list;
     }
 
     @Override
-    public Question findQuoteById(long id)
+    public Question findQuestionById(long id)
     {
-        return quoterepos.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(Long.toString(id)));
+        return questionrepos.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(Long.toString(id)));
     }
 
     @Override
     public void delete(long id)
     {
-        if (quoterepos.findById(id).isPresent())
+        if (questionrepos.findById(id).isPresent())
         {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (quoterepos.findById(id).get().getUser().getUsername().equalsIgnoreCase(authentication.getName()))
+            if (questionrepos.findById(id).get().getUser().getUsername().equalsIgnoreCase(authentication.getName()))
             {
-                quoterepos.deleteById(id);
+                questionrepos.deleteById(id);
             }
             else
             {
-                throw new EntityNotFoundException(Long.toString(id) + " " + authentication.getName());
+                throw new ResourceNotFoundException(Long.toString(id) + " " + authentication.getName());
             }
         }
         else
         {
-            throw new EntityNotFoundException(Long.toString(id));
+            throw new ResourceNotFoundException(Long.toString(id));
         }
     }
 
     @Transactional
     @Override
-    public Question save(Question question)
+    public Question save(Question question, Authentication authentication)
     {
-        return quoterepos.save(question);
+        question.setUser(userrepos.findByUsername(authentication.getName()));
+        Question saveQuestion =  questionrepos.save(question);
+        smsSender.sendSms(new SmsRequest("919-438-9115", "MentorMe has sent you a new question " + saveQuestion.getQuestion()));
+        return saveQuestion;
     }
 
     @Override
     public List<Question> findByUserName(String username)
     {
         List<Question> list = new ArrayList<>();
-        quoterepos.findAll().iterator().forEachRemaining(list::add);
+        questionrepos.findAll().iterator().forEachRemaining(list::add);
 
         list.removeIf(q -> !q.getUser().getUsername().equalsIgnoreCase(username));
         return list;

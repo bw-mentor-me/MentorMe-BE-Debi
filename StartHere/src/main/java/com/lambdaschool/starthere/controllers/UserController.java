@@ -38,7 +38,6 @@ public class UserController
         return new ResponseEntity<>(myUsers, HttpStatus.OK);
     }
 
-
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping(value = "/user/{userId}", produces = {"application/json"})
     public ResponseEntity<?> getUser(HttpServletRequest request, @PathVariable Long userId)
@@ -49,15 +48,16 @@ public class UserController
         return new ResponseEntity<>(u, HttpStatus.OK);
     }
 
-
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping(value = "/getusername", produces = {"application/json"})
     @ResponseBody
     public ResponseEntity<?> getCurrentUserName(HttpServletRequest request, Authentication authentication)
     {
         logger.trace(request.getRequestURI() + " accessed");
 
-        return new ResponseEntity<>(authentication.getPrincipal(), HttpStatus.OK);
+        return new ResponseEntity<>(userService.findUserByName(authentication.getName()), HttpStatus.OK);
     }
+
 
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
@@ -80,7 +80,7 @@ public class UserController
         return new ResponseEntity<>(null, responseHeaders, HttpStatus.CREATED);
     }
 
-
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping(value = "/user/{id}")
     public ResponseEntity<?> updateUser(HttpServletRequest request, @RequestBody User updateUser, @PathVariable long id)
     {
@@ -90,8 +90,7 @@ public class UserController
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_')")
     @DeleteMapping("/user/{id}")
     public ResponseEntity<?> deleteUserById(HttpServletRequest request, @PathVariable long id)
     {

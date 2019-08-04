@@ -3,52 +3,79 @@ package com.lambdaschool.starthere.models;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "quotes")
+@Table(name = "questions")
 public class Question extends Auditable
 {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long quotesid;
+    private long questionsid;
 
     @Column(nullable = false)
-    private String quote;
+    private String question;
+
+//    @ElementCollection
+//    @CollectionTable(name = "questioncomments", joinColumns = @JoinColumn(name = "questionsid"))
+//    @Column(name = "comments")
+//    private List<String> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("question")
+    private List<Comment> comments = new ArrayList<>();
+
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userid",
                 nullable = false)
-    @JsonIgnoreProperties({"quotes", "hibernateLazyInitializer"})
+    @JsonIgnoreProperties({"questions", "hibernateLazyInitializer"})
     private User user;
 
     public Question()
     {
     }
 
-    public Question(String quote, User user)
-    {
-        this.quote = quote;
+    public Question(String question, User user) {
+        this.question = question;
         this.user = user;
     }
 
-    public long getQuotesid()
+    public Question(String question, List<Comment> comments, User user)
     {
-        return quotesid;
+        this.question = question;
+        this.comments = comments;
+        this.user = user;
     }
 
-    public void setQuotesid(long quotesid)
+    public long getQuestionsid()
     {
-        this.quotesid = quotesid;
+        return questionsid;
     }
 
-    public String getQuote()
+    public void setQuestionsid(long questionsid)
     {
-        return quote;
+        this.questionsid = questionsid;
     }
 
-    public void setQuote(String quote)
+    public String getQuestion()
     {
-        this.quote = quote;
+        return question;
+    }
+
+    public void setQuestion(String question)
+    {
+        this.question = question;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    public void setComments(ArrayList<Comment> comments) {
+        this.comments = comments;
     }
 
     public User getUser()
@@ -60,4 +87,5 @@ public class Question extends Auditable
     {
         this.user = user;
     }
+
 }
